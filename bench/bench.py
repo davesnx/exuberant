@@ -483,6 +483,11 @@ def main():
         "--tool", default="auto", choices=["auto", "oha", "wrk", "autocannon"]
     )
     parser.add_argument("--no-build", action="store_true", help="skip build steps")
+    parser.add_argument(
+        "--fail-on-error",
+        action="store_true",
+        help="exit non-zero if any server failed to build, start, or bench (for CI)",
+    )
     parser.add_argument("--list", action="store_true", help="list servers and exit")
     parser.add_argument("--out", default=os.path.join(HERE, "results"))
     args = parser.parse_args()
@@ -530,6 +535,10 @@ def main():
         f.write(f"# Hello-world benchmark — {stamp}\n\n{md}\n")
 
     print(f"\n{txt}\n\nResults written to {out_dir}")
+
+    failed = [r["name"] for r in results if r["status"] != "ok"]
+    if args.fail_on_error and failed:
+        sys.exit(f"error: {len(failed)} server(s) did not complete: {', '.join(failed)}")
 
 
 if __name__ == "__main__":

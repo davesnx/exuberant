@@ -97,6 +97,22 @@ Each run writes to `results/<timestamp>/`:
 Servers run one at a time on the same port; each is built, started, warmed
 up, measured, and torn down before the next starts.
 
+## CI
+
+`.github/workflows/benchmark.yml` runs the whole suite on every push to
+`main` and every pull request (active once this project is the root of its
+own repository), plus on demand from the Actions tab, where `duration` and
+`connections` are tunable inputs. The job installs Bun, standalone dune, and
+`wrk`, caches the per-server `dune.lock` dirs and dune's package cache (only
+the first run builds compilers), then runs `bench.py --fail-on-error` so a
+server that fails to build, start, or respond turns the run red. The results
+table lands in the job's step summary and the full `results/` directory is
+uploaded as an artifact.
+
+CI numbers come from small shared runners where the load generator competes
+with the server for cores — use them for regressions and smoke checks, not
+as absolute comparisons.
+
 ## Methodology notes
 
 - Run on an idle machine; close other workloads. Results from laptops with
