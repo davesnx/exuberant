@@ -1,4 +1,4 @@
-(dirs :standard \ node_modules esy.lock)
+(dirs :standard \ node_modules esy.lock bench)
 
 (melange.emit
  (target output)

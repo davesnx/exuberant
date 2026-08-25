@@ -1,0 +1,25 @@
+opam-version: "2.0"
+synopsis: "Hello-world benchmark servers (dream, httpcats, httpun+eio, httpaf)"
+description:
+  "Minimal hello-world HTTP servers used to compare OCaml web stacks against each other and against Bun/Elysia."
+maintainer: ["David Sancho <david.sancho@ahrefs.com>"]
+authors: ["David Sancho"]
+license: "MIT"
+depends: [
+  "ocaml" {>= "5.1"}
+  "dune" {>= "3.16"}
+  "dream" {>= "1.0.0~alpha7"}
+  "httpaf" {>= "0.7.1"}
+  "httpaf-lwt-unix" {>= "0.7.1"}
+  "lwt"
+  "httpun" {>= "0.2.0"}
+  "httpun-eio" {>= "0.2.0"}
+  "eio" {>= "1.1"}
+  "eio_main" {>= "1.1"}
+  "httpcats"
+  "h1"
+  "miou" {>= "0.3.0"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]

@@ -1,0 +1,47 @@
+{
+  "defaults": {
+    "duration": 30,
+    "warmup": 5,
+    "connections": 64,
+    "threads": 4,
+    "port": 8080,
+    "path": "/"
+  },
+  "servers": [
+    {
+      "name": "elysia-bun",
+      "runtime": "Bun + Elysia (TypeScript)",
+      "cwd": "servers/elysia-bun",
+      "build": "bun install",
+      "run": "bun src/index.ts"
+    },
+    {
+      "name": "dream",
+      "runtime": "OCaml + Dream (lwt)",
+      "cwd": "servers/ocaml",
+      "build": "dune build ./dream/main.exe",
+      "run": "_build/default/dream/main.exe"
+    },
+    {
+      "name": "httpcats",
+      "runtime": "OCaml + httpcats (miou)",
+      "cwd": "servers/ocaml",
+      "build": "dune build ./httpcats/main.exe",
+      "run": "_build/default/httpcats/main.exe"
+    },
+    {
+      "name": "httpun-eio",
+      "runtime": "OCaml + httpun (eio)",
+      "cwd": "servers/ocaml",
+      "build": "dune build ./httpun_eio/main.exe",
+      "run": "_build/default/httpun_eio/main.exe"
+    },
+    {
+      "name": "httpaf",
+      "runtime": "OCaml + http/af (lwt)",
+      "cwd": "servers/ocaml",
+      "build": "dune build ./httpaf/main.exe",
+      "run": "_build/default/httpaf/main.exe"
+    }
+  ]
+}
