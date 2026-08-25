@@ -63,6 +63,17 @@ For each server, `bench.py` reports:
 
 ## Running
 
+Start with a single OCaml server before bringing up all four — `make first`
+locks and builds **dream** only, then runs a short benchmark of it against
+the Bun baseline:
+
+```sh
+curl -fsSL https://get.dune.build/install | sh   # recent dune, once
+make first
+```
+
+Once that works, the same flow scales to everything:
+
 ```sh
 make deps      # bun install + dune pkg lock for every server
 make bench     # full run: 30s per server, 64 connections, 5s warmup

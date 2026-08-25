@@ -1,6 +1,14 @@
-.PHONY: deps lock build bench smoke list clean
+.PHONY: first deps lock build bench smoke list clean
 
 OCAML_SERVERS = dream httpcats httpun-eio httpaf
+
+# Start here: get a single OCaml server (dream) locked, built, and benchmarked
+# in a short run next to the Bun baseline. Needs a recent dune (>= 3.20) with
+# package management: curl -fsSL https://get.dune.build/install | sh
+first:
+	cd servers/dream && ([ -d dune.lock ] || dune pkg lock) && dune build ./main.exe
+	cd servers/elysia-bun && bun install
+	python3 bench.py --servers elysia-bun,dream --duration 5 --warmup 2 --connections 32
 
 # Install/resolve dependencies for all servers (Bun packages + dune locks).
 deps: lock
