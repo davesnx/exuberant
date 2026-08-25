@@ -2,16 +2,23 @@
 
 One project to compare minimal "Hello, World!" HTTP servers across runtimes:
 
-| Server       | Stack                                   | Source                     |
-| ------------ | --------------------------------------- | -------------------------- |
-| `elysia-bun` | [Elysia](https://elysiajs.com) on Bun   | `servers/elysia-bun`       |
-| `dream`      | OCaml [Dream](https://aantron.github.io/dream) (lwt) | `servers/ocaml/dream`      |
-| `httpcats`   | OCaml [httpcats](https://github.com/robur-coop/httpcats) (miou) | `servers/ocaml/httpcats`   |
-| `httpun-eio` | OCaml [httpun](https://github.com/anmonteiro/httpun) + eio      | `servers/ocaml/httpun_eio` |
-| `httpaf`     | OCaml [http/af](https://github.com/inhabitedtype/httpaf) (lwt)  | `servers/ocaml/httpaf`     |
+| Server       | Stack                                   | Source               |
+| ------------ | --------------------------------------- | -------------------- |
+| `elysia-bun` | [Elysia](https://elysiajs.com) on Bun   | `servers/elysia-bun` |
+| `dream`      | OCaml [Dream](https://aantron.github.io/dream) (lwt) | `servers/dream`      |
+| `httpcats`   | OCaml [httpcats](https://github.com/robur-coop/httpcats) (miou) | `servers/httpcats`   |
+| `httpun-eio` | OCaml [httpun](https://github.com/anmonteiro/httpun) + eio      | `servers/httpun-eio` |
+| `httpaf`     | OCaml [http/af](https://github.com/inhabitedtype/httpaf) (lwt)  | `servers/httpaf`     |
 
 Every server does the same thing: `GET /` → `200 text/plain "Hello, World!"`,
 listening on `$PORT` (default 8080), single process, no logging middleware.
+
+Each OCaml server is its **own standalone dune project** using [dune package
+management](https://dune.readthedocs.io/en/stable/explanation/package-management.html):
+`dune pkg lock` solves and locks that server's dependencies into a private
+`dune.lock/`, so version constraints of one stack (say httpcats' h1/miou) can
+never collide with another's (Dream's lwt ecosystem) — no shared opam switch
+needed.
 
 ## Measurements
 
@@ -30,13 +37,23 @@ For each server, `bench.py` reports:
 
 - Linux (resource sampling reads `/proc`).
 - [Bun](https://bun.sh) for the Elysia server.
-- An OCaml 5.1+ [opam](https://opam.ocaml.org) switch for the OCaml servers:
+- dune >= 3.20 with package management for the OCaml servers — easiest via the
+  standalone dune binary (no opam required):
 
   ```sh
-  cd servers/ocaml
-  opam install . --deps-only
-  dune build
+  curl -fsSL https://get.dune.build/install | sh
   ```
+
+  Then, per server (or `make deps` / `make build` for all of them):
+
+  ```sh
+  cd servers/dream
+  dune pkg lock   # solve + lock this server's deps into dune.lock/
+  dune build      # fetch, build deps, and build the server
+  ```
+
+  Locks are per project. Commit the generated `dune.lock/` directories if you
+  want reproducible benchmark builds across machines.
 
 - A load generator, one of (checked in this order):
   - [`oha`](https://github.com/hatoo/oha) — recommended (`cargo install oha`)
@@ -47,7 +64,7 @@ For each server, `bench.py` reports:
 ## Running
 
 ```sh
-make deps      # install Bun + opam dependencies
+make deps      # bun install + dune pkg lock for every server
 make bench     # full run: 30s per server, 64 connections, 5s warmup
 make smoke     # quick 3s-per-server pipeline check
 ```
@@ -88,8 +105,8 @@ up, measured, and torn down before the next starts.
 
 - The Elysia server and the harness were run and verified.
 - The OCaml servers follow each library's documented server API (see the
-  version bounds in `servers/ocaml/bench-servers.opam`) but were authored in
-  an environment without opam access, so run `dune build` locally; small
+  version bounds in each server's `dune-project`) but were authored in an
+  environment without opam-repository access, so run `dune build` locally; small
   adjustments may be needed if your library versions moved. httpcats' server
   API in particular is young — its handler receives ``` `V1 ``` (`H1.Reqd.t`)
   for cleartext http/1.1.
