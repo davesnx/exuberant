@@ -1,27 +1,25 @@
-.PHONY: first deps switches build bench smoke list clean distclean
+.PHONY: first deps lock build bench smoke list clean
 
 OCAML_SERVERS = dream httpcats httpun-eio httpaf
-OCAML_VERSION ?= 5.3.0
 
-# Start here: get a single OCaml server (dream) built in its own local opam
-# switch and benchmarked in a short run next to the Bun baseline.
-# Needs opam initialized once (opam init -a).
+# Start here: get a single OCaml server (dream) locked, built, and benchmarked
+# in a short run next to the Bun baseline. Needs a recent dune (>= 3.20) with
+# package management: curl -fsSL https://get.dune.build/install | sh
 first:
-	cd servers/dream && ([ -d _opam ] || opam switch create . $(OCAML_VERSION) --deps-only --yes) \
-	  && opam exec -- dune build ./main.exe
+	cd servers/dream && ([ -d dune.lock ] || dune pkg lock) && dune build ./main.exe
 	cd servers/elysia-bun && bun install
 	python3 bench.py --servers elysia-bun,dream --duration 5 --warmup 2 --connections 32
 
-# Install/resolve dependencies for all servers (Bun packages + opam switches).
-deps: switches
+# Install/resolve dependencies for all servers (Bun packages + dune locks).
+deps: lock
 	cd servers/elysia-bun && bun install
 
-# One local opam switch (./_opam) per OCaml server: each server's dependency
-# versions are solved per project and never collide with the others.
-switches:
+# (Re)generate each OCaml server's own dune.lock. Each server is a standalone
+# dune project, so dependency versions are solved per server and never collide.
+lock:
 	@for s in $(OCAML_SERVERS); do \
-	  echo "== opam switch: $$s"; \
-	  (cd servers/$$s && ([ -d _opam ] || opam switch create . $(OCAML_VERSION) --deps-only --yes)) || exit 1; \
+	  echo "== dune pkg lock: $$s"; \
+	  (cd servers/$$s && dune pkg lock) || exit 1; \
 	done
 
 # Build every server without running the benchmark.
@@ -29,7 +27,7 @@ build:
 	cd servers/elysia-bun && bun install
 	@for s in $(OCAML_SERVERS); do \
 	  echo "== dune build: $$s"; \
-	  (cd servers/$$s && opam exec -- dune build ./main.exe) || exit 1; \
+	  (cd servers/$$s && ([ -d dune.lock ] || dune pkg lock) && dune build ./main.exe) || exit 1; \
 	done
 
 # Full benchmark run with the defaults from servers.json.
@@ -46,7 +44,3 @@ list:
 clean:
 	rm -rf servers/elysia-bun/node_modules results
 	@for s in $(OCAML_SERVERS); do rm -rf servers/$$s/_build; done
-
-# Also remove the per-server opam switches (expensive to recreate).
-distclean: clean
-	@for s in $(OCAML_SERVERS); do rm -rf servers/$$s/_opam; done
