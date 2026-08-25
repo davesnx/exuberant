@@ -13,12 +13,13 @@ One project to compare minimal "Hello, World!" HTTP servers across runtimes:
 Every server does the same thing: `GET /` → `200 text/plain "Hello, World!"`,
 listening on `$PORT` (default 8080), single process, no logging middleware.
 
-Each OCaml server is its **own standalone dune project** using [dune package
-management](https://dune.readthedocs.io/en/stable/explanation/package-management.html):
-`dune pkg lock` solves and locks that server's dependencies into a private
-`dune.lock/`, so version constraints of one stack (say httpcats' h1/miou) can
-never collide with another's (Dream's lwt ecosystem) — no shared opam switch
-needed.
+Each OCaml server is its **own standalone dune project** (with its own
+`dune-project`, `dune-workspace`, and generated `.opam` file) built in its
+**own local opam switch** (`./_opam`): dependency versions are solved per
+server, so constraints of one stack (say httpcats' h1/miou) can never collide
+with another's (Dream's lwt ecosystem). The same per-project metadata also
+works with [dune package management](https://dune.readthedocs.io/en/stable/explanation/package-management.html)
+(`dune pkg lock` inside a server directory) if you prefer that over opam.
 
 ## Measurements
 
@@ -37,23 +38,19 @@ For each server, `bench.py` reports:
 
 - Linux (resource sampling reads `/proc`).
 - [Bun](https://bun.sh) for the Elysia server.
-- dune >= 3.20 with package management for the OCaml servers — easiest via the
-  standalone dune binary (no opam required):
-
-  ```sh
-  curl -fsSL https://get.dune.build/install | sh
-  ```
-
-  Then, per server (or `make deps` / `make build` for all of them):
+- [opam](https://opam.ocaml.org) >= 2.1, initialized once (`opam init -a`),
+  for the OCaml servers. Then, per server (or `make deps` / `make build` for
+  all of them):
 
   ```sh
   cd servers/dream
-  dune pkg lock   # solve + lock this server's deps into dune.lock/
-  dune build      # fetch, build deps, and build the server
+  opam switch create . 5.3.0 --deps-only --yes  # local switch in ./_opam
+  opam exec -- dune build ./main.exe
   ```
 
-  Locks are per project. Commit the generated `dune.lock/` directories if you
-  want reproducible benchmark builds across machines.
+  Switches are per project (`./_opam`, gitignored). Creating each one builds
+  a compiler, so the first `make deps` takes a while; `make clean` keeps the
+  switches, `make distclean` removes them.
 
 - A load generator, one of (checked in this order):
   - [`oha`](https://github.com/hatoo/oha) — recommended (`cargo install oha`)
@@ -64,18 +61,18 @@ For each server, `bench.py` reports:
 ## Running
 
 Start with a single OCaml server before bringing up all four — `make first`
-locks and builds **dream** only, then runs a short benchmark of it against
-the Bun baseline:
+creates a local switch for **dream** only, builds it, then runs a short
+benchmark of it against the Bun baseline:
 
 ```sh
-curl -fsSL https://get.dune.build/install | sh   # recent dune, once
+opam init -a    # once
 make first
 ```
 
 Once that works, the same flow scales to everything:
 
 ```sh
-make deps      # bun install + dune pkg lock for every server
+make deps      # bun install + one local opam switch per OCaml server
 make bench     # full run: 30s per server, 64 connections, 5s warmup
 make smoke     # quick 3s-per-server pipeline check
 ```

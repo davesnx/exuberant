@@ -1,9 +1,18 @@
-(lang dune 3.20)
+(lang dune 3.14)
 
 (name bench_httpun_eio)
 
-; Standalone dune project: `dune pkg lock` resolves dependencies into this
-; project's own dune.lock/, independent of the other benchmark servers.
+(generate_opam_files true)
+
+(authors "David Sancho")
+
+(maintainers "David Sancho")
+
+(license MIT)
+
+; Standalone dune project with its own opam file: create a local switch with
+; `opam switch create . <compiler> --deps-only` so this server's dependency
+; versions live in ./_opam, independent of the other benchmark servers.
 (package
  (name bench_httpun_eio)
  (allow_empty)

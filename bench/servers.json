@@ -19,28 +19,28 @@
       "name": "dream",
       "runtime": "OCaml + Dream (lwt)",
       "cwd": "servers/dream",
-      "build": "[ -d dune.lock ] || dune pkg lock && dune build ./main.exe",
+      "build": "([ -d _opam ] || opam switch create . 5.3.0 --deps-only --yes) && opam exec -- dune build ./main.exe",
       "run": "_build/default/main.exe"
     },
     {
       "name": "httpcats",
       "runtime": "OCaml + httpcats (miou)",
       "cwd": "servers/httpcats",
-      "build": "[ -d dune.lock ] || dune pkg lock && dune build ./main.exe",
+      "build": "([ -d _opam ] || opam switch create . 5.3.0 --deps-only --yes) && opam exec -- dune build ./main.exe",
       "run": "_build/default/main.exe"
     },
     {
       "name": "httpun-eio",
       "runtime": "OCaml + httpun (eio)",
       "cwd": "servers/httpun-eio",
-      "build": "[ -d dune.lock ] || dune pkg lock && dune build ./main.exe",
+      "build": "([ -d _opam ] || opam switch create . 5.3.0 --deps-only --yes) && opam exec -- dune build ./main.exe",
       "run": "_build/default/main.exe"
     },
     {
       "name": "httpaf",
       "runtime": "OCaml + http/af (lwt)",
       "cwd": "servers/httpaf",
-      "build": "[ -d dune.lock ] || dune pkg lock && dune build ./main.exe",
+      "build": "([ -d _opam ] || opam switch create . 5.3.0 --deps-only --yes) && opam exec -- dune build ./main.exe",
       "run": "_build/default/main.exe"
     }
   ]
